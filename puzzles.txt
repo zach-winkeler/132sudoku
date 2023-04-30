@@ -1,0 +1,39 @@
+avoids 132 along rows and columns
+trivial
+_____________
+|____.|____.|
+|__.|_____|.|
+|.|.|____.|.|
+|.|_____|.|_|
+|.|____.|__1|
+|_____|_____|
+
+avoids 1234 along rows and columns
+pretty easy?
+_____________
+|1 . .|. . .|
+|._5_.|._6_.|
+|. . .|. . 6|
+|2_._.|._._.|
+|. 3 .|. 5 .|
+|._._.|._._2|
+
+avoids 1234 along rows and columns
+a bit harder but still a 6x6
+_____________
+|3 . .|. . 1|
+|._._4|._._.|
+|. 5 .|6 . .|
+|._4_.|._1_.|
+|. . .|4 . .|
+|._._6|._._.|
+
+avoids 1234 along rows and columns
+generated using the solver so more interesting
+_____________
+|. . .|. . .|
+|._._0|1_._.|
+|. 1 .|. 4 .|
+|._5_.|._1_.|
+|. . 1|0 . .|
+|._._.|._._.|
