@@ -32,8 +32,18 @@ avoids 1234 along rows and columns
 generated using the solver so more interesting
 _____________
 |. . .|. . .|
-|._._0|1_._.|
-|. 1 .|. 4 .|
-|._5_.|._1_.|
-|. . 1|0 . .|
+|._._1|2_._.|
+|. 2 .|. 5 .|
+|._6_.|._2_.|
+|. . 2|1 . .|
+|._._.|._._.|
+
+avoids 1234 along rows and columns
+generated using the solver, hardest one yet IMO
+_____________
+|. 5 4|. . .|
+|._._.|._3_.|
+|. . .|6 . 4|
+|._._.|2_5_.|
+|. . .|. . .|
 |._._.|._._.|
