@@ -31,16 +31,16 @@ def avoiding_permutations(n, pattern):
     return [permutation for permutation in itertools.permutations(range(n)) if avoids(permutation, pattern)]
 
 
-def valid_sudoku(n, d, row_pattern, column_pattern, board):
+def valid_sudoku(n, d, row_pattern, column_pattern, board, custom_boxes=None):
     return valid_rows(n, d, row_pattern, column_pattern, board) \
         and valid_columns(n, d, row_pattern, column_pattern, board) \
-        and valid_boxes(n, d, row_pattern, column_pattern, board)
+        and valid_boxes(n, d, row_pattern, column_pattern, board, custom_boxes=custom_boxes)
 
 
-def valid_sudoku_cell(n, d, row_pattern, column_pattern, board, cell):
+def valid_sudoku_cell(n, d, row_pattern, column_pattern, board, cell, custom_boxes=None):
     return valid_row_fixed(n, d, row_pattern, column_pattern, board, cell) \
         and valid_column_fixed(n, d, row_pattern, column_pattern, board, cell) \
-        and valid_box(n, d, row_pattern, column_pattern, board, get_box_index(n, d, cell))
+        and valid_box(n, d, row_pattern, column_pattern, board, get_box_index(n, d, cell, custom_boxes=custom_boxes), custom_boxes=custom_boxes)
 
 
 def valid_rows(n, d, row_pattern, column_pattern, board):
@@ -71,20 +71,26 @@ def valid_column_fixed(n, d, row_pattern, column_pattern, board, cell):
     return len(column) == len(set(column)) and avoids_fixed(tuple(column), column_pattern, cell[0])
 
 
-def valid_boxes(n, d, row_pattern, column_pattern, board):
-    return all(valid_box(n, d, row_pattern, column_pattern, board, k) for k in range(n))
+def valid_boxes(n, d, row_pattern, column_pattern, board, custom_boxes=None):
+    return all(valid_box(n, d, row_pattern, column_pattern, board, k, custom_boxes=custom_boxes) for k in range(n))
 
 
-def valid_box(n, d, row_pattern, column_pattern, board, k):
-    box = [board[i][j]
-           for j in range((k % math.floor(n / d)) * d, ((k % math.floor(n / d)) + 1) * d)
-           for i in range(math.floor(k * d / n) * math.floor(n / d), (math.floor(k * d / n) + 1) * math.floor(n / d))
-           if board[i][j] is not None]
+def valid_box(n, d, row_pattern, column_pattern, board, k, custom_boxes=None):
+    if custom_boxes is not None:
+        box = [board[i][j] for (i, j) in custom_boxes[k] if board[i][j] is not None]
+    else:
+        box = [board[i][j]
+               for j in range((k % math.floor(n / d)) * d, ((k % math.floor(n / d)) + 1) * d)
+               for i in range(math.floor(k * d / n) * math.floor(n / d), (math.floor(k * d / n) + 1) * math.floor(n / d))
+               if board[i][j] is not None]
     return len(box) == len(set(box))
 
 
-def get_box_index(n, d, cell):
-    return math.floor(cell[0] * d / n) * math.floor(n / d) + math.floor(cell[1] / d)
+def get_box_index(n, d, cell, custom_boxes=None):
+    if custom_boxes is not None:
+        return next(filter(lambda t: tuple(cell) in t[1], enumerate(custom_boxes)))[0]
+    else:
+        return math.floor(cell[0] * d / n) * math.floor(n / d) + math.floor(cell[1] / d)
 
 
 def previous_cell(n, d, puzzle, cell):
@@ -115,7 +121,7 @@ def next_cell(n, d, puzzle, cell):
         return next_cell(n, d, puzzle, possible)
 
 
-def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, start_from=None):
+def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, start_from=None, custom_boxes=None):
     if start_from:
         solution = start_from
         row_index = max(
@@ -125,7 +131,7 @@ def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, s
     else:
         solution = copy.deepcopy(puzzle)
 
-        if not valid_sudoku(n, d, row_pattern, column_pattern, solution):
+        if not valid_sudoku(n, d, row_pattern, column_pattern, solution, custom_boxes=custom_boxes):
             print("Invalid starting board!")
             return
 
@@ -136,7 +142,7 @@ def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, s
 
     try:
         while True:
-            if valid_sudoku_cell(n, d, row_pattern, column_pattern, solution, cell):
+            if valid_sudoku_cell(n, d, row_pattern, column_pattern, solution, cell, custom_boxes=custom_boxes):
                 if next_cell(n, d, puzzle, cell) is None:
                     solutions += [copy.deepcopy(solution)]
                     print('Found new solution:')
@@ -163,7 +169,8 @@ def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, s
                         return
                     else:
                         cell = previous_cell(n, d, puzzle, cell)
-    except:
+    except Exception as e:
+        print(e)
         print('Last checked board:')
         for row in solution:
             print(str(row) + ',')
@@ -171,13 +178,56 @@ def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, s
 
 
 def main():
-    print_avoiding_sudoku_solutions(6, 3, (0,1,2,3), (0,1,2,3),
-                                    [[None,None,None,None,None,5   ],
-                                     [None,1   ,None,None,None,None],
-                                     [None,None,2   ,None,None,None],
-                                     [None,None,None,None,4   ,None],
-                                     [0   ,None,None,None,None,None],
-                                     [None,None,None,3   ,None,None]])
+    print_avoiding_sudoku_solutions(8, 12, (0, 1, 2, 3), (0, 1, 2, 3),
+                                    [[7   , 6   , 1   , None, None, None, None, None],
+                                     [None, None, None, None, None, None, None, None],
+                                     [None, None, None, None, None, None, None, None],
+                                     [5   , None, None, None, None, None, None, None],
+                                     [None, None, None, None, None, None, None, None],
+                                     [None, None, None, None, None, None, None, None],
+                                     [None, None, None, None, None, None, None, None],
+                                     [None, None, None, None, None, None, None, None]],
+                                    custom_boxes=[[(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (2, 0)],
+                                                  [(0, 7), (0, 6), (0, 5), (0, 4), (1, 7), (1, 6), (1, 5), (2, 7)],
+                                                  [(1, 3), (1,4), (2,2), (2,3),(2,4),(2,5),(3,3),(3,4)],
+                                                  [(4, 3), (4,4), (5,2), (5,3),(5,4),(5,5),(6,3),(6,4)],
+                                                  [(2,1), (3,0),(3,1),(3,2),(4,0),(4,1),(4,2),(5,1)],
+                                                  [(2,6), (3,5),(3,6),(3,7),(4,5),(4,6),(4,7),(5,6)],
+                                                  [(7, 7), (7, 6), (7, 5), (7, 4), (6, 7), (6, 6), (6, 5), (5, 7)],
+                                                  [(7, 0), (7, 1), (7, 2), (7, 3), (6, 0), (6, 1), (6, 2), (5, 0)]
+                                                  ])
+
+
+    # print_avoiding_sudoku_solutions(7, 12, (0, 1, 2, 3), (0, 1, 2, 3),
+    #                                 [[None, None, None, None, None, None, None],
+    #                                  [None, None, None, 6   , None, None, None],
+    #                                  [3   , None, None, None, 1   , None, None],
+    #                                  [None, 6   , None, None, None, 2   , None],
+    #                                  [None, None, 0   , None, None, None, 3   ],
+    #                                  [None, None, None, 4   , None, None, None],
+    #                                  [None, None, None, None, None, None, None]],
+    #                                 custom_boxes=[[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (2, 0), (2, 1)],
+    #                                               [(0, 3), (0, 4), (0, 5), (1, 2), (1, 3), (1, 4), (2, 4)],
+    #                                               [(0, 6), (1, 5), (1, 6), (2, 5), (2, 6), (3, 5), (3, 6)],
+    #                                               [(2, 2), (2, 3), (3, 2), (3, 3), (3, 4), (4, 3), (4, 4)],
+    #                                               [(3, 0), (3, 1), (4, 0), (4, 1), (5, 0), (5, 1), (6, 0)],
+    #                                               [(4, 2), (5, 2), (5, 3), (5, 4), (6, 1), (6, 2), (6, 3)],
+    #                                               [(4, 5), (4, 6), (5, 5), (5, 6), (6, 4), (6, 5), (6, 6)]])
+    # print_avoiding_sudoku_solutions(7, 12, (0,1,2,3), (0,1,2,3),
+    #                                [[None,None,None,None,None,None,None],
+    #                                 [None,None,None,None,None,None,None],
+    #                                 [None,None,None,None,1   ,None,None],
+    #                                 [None,6   ,None,None,None,2   ,None],
+    #                                 [None,None,0   ,None,None,None,None],
+    #                                 [None,None,None,None,None,None,None],
+    #                                 [None,None,None,None,None,None,None]],
+    #                                 custom_boxes=[[(0, 0), (0, 1), (0,2), (1,0),(1,1),(2,0),(2,1)],
+    #                                               [(0,3),(0,4),(0,5),(1,2),(1,3),(1,4),(2,4)],
+    #                                               [(0,6),(1,5),(1,6),(2,5),(2,6),(3,5),(3,6)],
+    #                                               [(2,2),(2,3),(3,2),(3,3),(3,4),(4,3),(4,4)],
+    #                                               [(3,0),(3,1),(4,0),(4,1),(5,0),(5,1),(6,0)],
+    #                                               [(4,2),(5,2),(5,3),(5,4),(6,1),(6,2),(6,3)],
+    #                                               [(4,5),(4,6),(5,5),(5,6),(6,4),(6,5),(6,6)]])
 
     # print_avoiding_sudoku_solutions(9, 3, (4,3,2,1,0), (4,3,2,1,0),
     #                                 [[None,None,2   ,0   ,None,5   ,None,6   ,None],
