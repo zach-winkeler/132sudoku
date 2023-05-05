@@ -115,67 +115,111 @@ def next_cell(n, d, puzzle, cell):
         return next_cell(n, d, puzzle, possible)
 
 
-def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle):
-    solution = copy.deepcopy(puzzle)
+def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, start_from=None):
+    if start_from:
+        solution = start_from
+        row_index = max(
+            i for i in range(n) if any(solution[i][j] is not None and puzzle[i][j] is None for j in range(n)))
+        col_index = max(j for j in range(n) if solution[row_index][j] is not None and puzzle[row_index][j] is None)
+        cell = [row_index, col_index]
+    else:
+        solution = copy.deepcopy(puzzle)
+
+        if not valid_sudoku(n, d, row_pattern, column_pattern, solution):
+            print("Invalid starting board!")
+            return
+
+        cell = next_cell(n, d, puzzle, [-1, n - 1])
+        solution[cell[0]][cell[1]] = 0
+
     solutions = []
 
-    if not valid_sudoku(n, d, row_pattern, column_pattern, solution):
-        print("Invalid starting board!")
-        return
-
-    cell = next_cell(n, d, puzzle, [-1, n - 1])
-    solution[cell[0]][cell[1]] = 0
-
-    while True:
-        if valid_sudoku_cell(n, d, row_pattern, column_pattern, solution, cell):
-            if next_cell(n, d, puzzle, cell) is None:
-                solutions += [copy.deepcopy(solution)]
-                print('Found new solution:')
-                for row in solution:
-                    print(row)
-                print('\n')
-            else:
-                cell = next_cell(n, d, puzzle, cell)
-                solution[cell[0]][cell[1]] = 0
-                continue
+    try:
         while True:
-            if solution[cell[0]][cell[1]] < n - 1:
-                solution[cell[0]][cell[1]] += 1
-                break
-            else:
-                solution[cell[0]][cell[1]] = None
-                if previous_cell(n, d, puzzle, cell) is None:
-                    print(f'All {len(solutions)} solutions found!')
-                    for solution in solutions:
-                        print('')
-                        for row in solution:
-                            print(row)
-                        print('\n')
-                    return
+            if valid_sudoku_cell(n, d, row_pattern, column_pattern, solution, cell):
+                if next_cell(n, d, puzzle, cell) is None:
+                    solutions += [copy.deepcopy(solution)]
+                    print('Found new solution:')
+                    for row in solution:
+                        print(str(row) + ',')
+                    print('\n')
                 else:
-                    cell = previous_cell(n, d, puzzle, cell)
+                    cell = next_cell(n, d, puzzle, cell)
+                    solution[cell[0]][cell[1]] = 0
+                    continue
+            while True:
+                if solution[cell[0]][cell[1]] < n - 1:
+                    solution[cell[0]][cell[1]] += 1
+                    break
+                else:
+                    solution[cell[0]][cell[1]] = None
+                    if previous_cell(n, d, puzzle, cell) is None:
+                        print(f'All {len(solutions)} solutions found!')
+                        for solution in solutions:
+                            print('')
+                            for row in solution:
+                                print(str(row) + ',')
+                            print('\n')
+                        return
+                    else:
+                        cell = previous_cell(n, d, puzzle, cell)
+    except:
+        print('Last checked board:')
+        for row in solution:
+            print(str(row) + ',')
+        print('\n')
 
 
 def main():
-    # # 18s, 417 sols
-    # print_avoiding_sudoku_solutions(6, 3, (0,1,2,3), (0,1,2,3),
-    #                                 [[None,None,None,None,None,None],
-    #                                  [None,None,0   ,1   ,None,None],
-    #                                  [None,None,None,None,4   ,None],
-    #                                  [None,None,None,None,None,None],
-    #                                  [None,None,None,None,None,None],
-    #                                  [None,None,None,None,None,None]])
+    print_avoiding_sudoku_solutions(6, 3, (0,1,2,3), (0,1,2,3),
+                                    [[None,None,None,None,None,5   ],
+                                     [None,1   ,None,None,None,None],
+                                     [None,None,2   ,None,None,None],
+                                     [None,None,None,None,4   ,None],
+                                     [0   ,None,None,None,None,None],
+                                     [None,None,None,3   ,None,None]])
 
-    print_avoiding_sudoku_solutions(9, 3, (0, 1, 2, 3), (0, 1, 2, 3),
-                                    [[3, 8, 2, 6, 4, 7, 0, 5, None],
-                                     [0, 6, 5, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None, None]])
+    # print_avoiding_sudoku_solutions(9, 3, (4,3,2,1,0), (4,3,2,1,0),
+    #                                 [[None,None,2   ,0   ,None,5   ,None,6   ,None],
+    #                                  [None,5   ,None,None,None,None,None,None,None],
+    #                                  [None,None,None,None,None,None,None,None,3   ],
+    #                                  [None,None,3    ,4  ,None,8   ,None,None,None],
+    #                                  [None,None,None,None,7   ,None,1   ,None,None],
+    #                                  [None,0   ,8   ,None,None,None,6   ,None,None],
+    #                                  [None,None,None,None,8   ,None,None,1   ,2   ],
+    #                                  [4   ,2   ,None,None,None,6   ,None,None,5   ],
+    #                                  [8   ,None,None,None,5   ,None,None,None,None]])
+
+    # print_avoiding_sudoku_solutions(9, 3, (0,1,2,3,4), (0,1,2,3,4),
+    #                                 [[None,None,6   ,8   ,None,3   ,None,2   ,None],
+    #                                  [None,3   ,None,None,None,None,None,None,None],
+    #                                  [None,None,None,None,None,None,None,None,5   ],
+    #                                  [None,None,5    ,4  ,None,0   ,None,None,None],
+    #                                  [None,None,None,None,1   ,None,7   ,None,None],
+    #                                  [None,8   ,0   ,None,None,None,2   ,None,None],
+    #                                  [None,None,None,None,0   ,None,None,7   ,6   ],
+    #                                  [4   ,6   ,None,None,None,2   ,None,None,3   ],
+    #                                  [0   ,None,None,None,3   ,None,None,None,None]])
+
+    # print_avoiding_sudoku_solutions(9, 3, (0, 1, 2, 3), (0, 1, 2, 3),
+    #                                 [[None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None],
+    #                                  [None, None, None, None, None, None, None, None, None]],
+    #                                 start_from=[[0, 1, 8, 7, 6, 5, 4, 3, 2],
+    #                                             [2, 4, 3, 0, 8, 1, 7, 6, 5],
+    #                                             [7, 5, 6, 4, 2, 3, 0, 8, 1],
+    #                                             [5, 3, 2, 1, 0, 7, 6, 4, 8],
+    #                                             [4, 0, 7, 8, 5, 2, 1, 3, None],
+    #                                             [None, None, None, None, None, None, None, None, None],
+    #                                             [None, None, None, None, None, None, None, None, None],
+    #                                             [None, None, None, None, None, None, None, None, None],
+    #                                             [None, None, None, None, None, None, None, None, None]])
 
 
 if __name__ == '__main__':
