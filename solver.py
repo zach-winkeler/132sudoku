@@ -3,40 +3,46 @@ import itertools
 import numpy
 import copy
 
-
-def avoids(permutation, pattern):
-    if len(permutation) < len(pattern):
+# returns whether or not the given sequence avoids the given pattern
+def avoids(sequence, pattern):
+    if len(sequence) < len(pattern):
         return True
-    elif len(permutation) == len(pattern):
-        return tuple(numpy.argsort(permutation)) != pattern
+    elif len(sequence) == len(pattern):
+        return tuple(numpy.argsort(sequence)) != pattern
     else:
         return all(avoids(tuple(numpy.argsort(sub)), pattern)
-                   for sub in itertools.combinations(permutation, len(pattern)))
+                   for sub in itertools.combinations(sequence, len(pattern)))
 
-
-def avoids_fixed(permutation, pattern, fixed_index):
-    if len(permutation) < len(pattern):
+# return whether or not the given sequence avoids the given pattern
+# with the additional constraint that the pattern needs to include the term at the given index
+def avoids_fixed(sequence, pattern, fixed_index):
+    if len(sequence) < len(pattern):
         return True
-    elif len(permutation) == len(pattern):
-        return tuple(numpy.argsort(permutation)) != pattern
+    elif len(sequence) == len(pattern):
+        return tuple(numpy.argsort(sequence)) != pattern
     else:
-        return all(tuple(numpy.argsort(prefix + (permutation[fixed_index],) + suffix)) != pattern
+        return all(tuple(numpy.argsort(prefix + (sequence[fixed_index],) + suffix)) != pattern
                    for prefix_length in range(min(fixed_index + 1, len(pattern)))
-                   for prefix in itertools.combinations(permutation[:fixed_index], prefix_length)
+                   for prefix in itertools.combinations(sequence[:fixed_index], prefix_length)
                    for suffix in
-                   itertools.combinations(permutation[fixed_index + 1:], len(pattern) - prefix_length - 1))
+                   itertools.combinations(sequence[fixed_index + 1:], len(pattern) - prefix_length - 1))
 
 
+# enumerates all pattern-avoiding permutations of length n
 def avoiding_permutations(n, pattern):
     return [permutation for permutation in itertools.permutations(range(n)) if avoids(permutation, pattern)]
 
 
+# returns if the given board is a valid pattern-avoiding sudoku
 def valid_sudoku(n, d, row_pattern, column_pattern, board, custom_boxes=None):
     return valid_rows(n, d, row_pattern, column_pattern, board) \
         and valid_columns(n, d, row_pattern, column_pattern, board) \
         and valid_boxes(n, d, row_pattern, column_pattern, board, custom_boxes=custom_boxes)
 
 
+# returns if the given board is a valid pattern-avoiding sudoku
+# locally with respect to the given cell
+# saves time checking all the cells if only one new cell was changed
 def valid_sudoku_cell(n, d, row_pattern, column_pattern, board, cell, custom_boxes=None):
     return valid_row_fixed(n, d, row_pattern, column_pattern, board, cell) \
         and valid_column_fixed(n, d, row_pattern, column_pattern, board, cell) \
@@ -169,8 +175,7 @@ def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, s
                         return
                     else:
                         cell = previous_cell(n, d, puzzle, cell)
-    except Exception as e:
-        print(e)
+    except KeyboardInterrupt:
         print('Last checked board:')
         for row in solution:
             print(str(row) + ',')
@@ -178,98 +183,21 @@ def print_avoiding_sudoku_solutions(n, d, row_pattern, column_pattern, puzzle, s
 
 
 def main():
-    print_avoiding_sudoku_solutions(8, 12, (0, 1, 2, 3), (0, 1, 2, 3),
-                                    [[7   , 6   , 1   , None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None],
-                                     [5   , None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None],
-                                     [None, None, None, None, None, None, None, None]],
-                                    custom_boxes=[[(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (2, 0)],
-                                                  [(0, 7), (0, 6), (0, 5), (0, 4), (1, 7), (1, 6), (1, 5), (2, 7)],
-                                                  [(1, 3), (1,4), (2,2), (2,3),(2,4),(2,5),(3,3),(3,4)],
-                                                  [(4, 3), (4,4), (5,2), (5,3),(5,4),(5,5),(6,3),(6,4)],
-                                                  [(2,1), (3,0),(3,1),(3,2),(4,0),(4,1),(4,2),(5,1)],
-                                                  [(2,6), (3,5),(3,6),(3,7),(4,5),(4,6),(4,7),(5,6)],
-                                                  [(7, 7), (7, 6), (7, 5), (7, 4), (6, 7), (6, 6), (6, 5), (5, 7)],
-                                                  [(7, 0), (7, 1), (7, 2), (7, 3), (6, 0), (6, 1), (6, 2), (5, 0)]
-                                                  ])
-
-
-    # print_avoiding_sudoku_solutions(7, 12, (0, 1, 2, 3), (0, 1, 2, 3),
-    #                                 [[None, None, None, None, None, None, None],
-    #                                  [None, None, None, 6   , None, None, None],
-    #                                  [3   , None, None, None, 1   , None, None],
-    #                                  [None, 6   , None, None, None, 2   , None],
-    #                                  [None, None, 0   , None, None, None, 3   ],
-    #                                  [None, None, None, 4   , None, None, None],
-    #                                  [None, None, None, None, None, None, None]],
-    #                                 custom_boxes=[[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (2, 0), (2, 1)],
-    #                                               [(0, 3), (0, 4), (0, 5), (1, 2), (1, 3), (1, 4), (2, 4)],
-    #                                               [(0, 6), (1, 5), (1, 6), (2, 5), (2, 6), (3, 5), (3, 6)],
-    #                                               [(2, 2), (2, 3), (3, 2), (3, 3), (3, 4), (4, 3), (4, 4)],
-    #                                               [(3, 0), (3, 1), (4, 0), (4, 1), (5, 0), (5, 1), (6, 0)],
-    #                                               [(4, 2), (5, 2), (5, 3), (5, 4), (6, 1), (6, 2), (6, 3)],
-    #                                               [(4, 5), (4, 6), (5, 5), (5, 6), (6, 4), (6, 5), (6, 6)]])
-    # print_avoiding_sudoku_solutions(7, 12, (0,1,2,3), (0,1,2,3),
-    #                                [[None,None,None,None,None,None,None],
-    #                                 [None,None,None,None,None,None,None],
-    #                                 [None,None,None,None,1   ,None,None],
-    #                                 [None,6   ,None,None,None,2   ,None],
-    #                                 [None,None,0   ,None,None,None,None],
-    #                                 [None,None,None,None,None,None,None],
-    #                                 [None,None,None,None,None,None,None]],
-    #                                 custom_boxes=[[(0, 0), (0, 1), (0,2), (1,0),(1,1),(2,0),(2,1)],
-    #                                               [(0,3),(0,4),(0,5),(1,2),(1,3),(1,4),(2,4)],
-    #                                               [(0,6),(1,5),(1,6),(2,5),(2,6),(3,5),(3,6)],
-    #                                               [(2,2),(2,3),(3,2),(3,3),(3,4),(4,3),(4,4)],
-    #                                               [(3,0),(3,1),(4,0),(4,1),(5,0),(5,1),(6,0)],
-    #                                               [(4,2),(5,2),(5,3),(5,4),(6,1),(6,2),(6,3)],
-    #                                               [(4,5),(4,6),(5,5),(5,6),(6,4),(6,5),(6,6)]])
-
-    # print_avoiding_sudoku_solutions(9, 3, (4,3,2,1,0), (4,3,2,1,0),
-    #                                 [[None,None,2   ,0   ,None,5   ,None,6   ,None],
-    #                                  [None,5   ,None,None,None,None,None,None,None],
-    #                                  [None,None,None,None,None,None,None,None,3   ],
-    #                                  [None,None,3    ,4  ,None,8   ,None,None,None],
-    #                                  [None,None,None,None,7   ,None,1   ,None,None],
-    #                                  [None,0   ,8   ,None,None,None,6   ,None,None],
-    #                                  [None,None,None,None,8   ,None,None,1   ,2   ],
-    #                                  [4   ,2   ,None,None,None,6   ,None,None,5   ],
-    #                                  [8   ,None,None,None,5   ,None,None,None,None]])
-
-    # print_avoiding_sudoku_solutions(9, 3, (0,1,2,3,4), (0,1,2,3,4),
-    #                                 [[None,None,6   ,8   ,None,3   ,None,2   ,None],
-    #                                  [None,3   ,None,None,None,None,None,None,None],
-    #                                  [None,None,None,None,None,None,None,None,5   ],
-    #                                  [None,None,5    ,4  ,None,0   ,None,None,None],
-    #                                  [None,None,None,None,1   ,None,7   ,None,None],
-    #                                  [None,8   ,0   ,None,None,None,2   ,None,None],
-    #                                  [None,None,None,None,0   ,None,None,7   ,6   ],
-    #                                  [4   ,6   ,None,None,None,2   ,None,None,3   ],
-    #                                  [0   ,None,None,None,3   ,None,None,None,None]])
-
-    # print_avoiding_sudoku_solutions(9, 3, (0, 1, 2, 3), (0, 1, 2, 3),
-    #                                 [[None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None],
-    #                                  [None, None, None, None, None, None, None, None, None]],
-    #                                 start_from=[[0, 1, 8, 7, 6, 5, 4, 3, 2],
-    #                                             [2, 4, 3, 0, 8, 1, 7, 6, 5],
-    #                                             [7, 5, 6, 4, 2, 3, 0, 8, 1],
-    #                                             [5, 3, 2, 1, 0, 7, 6, 4, 8],
-    #                                             [4, 0, 7, 8, 5, 2, 1, 3, None],
-    #                                             [None, None, None, None, None, None, None, None, None],
-    #                                             [None, None, None, None, None, None, None, None, None],
-    #                                             [None, None, None, None, None, None, None, None, None],
-    #                                             [None, None, None, None, None, None, None, None, None]])
+    print_avoiding_sudoku_solutions(7, 12, (0,1,2,3), (0,1,2,3),
+                                   [[None,None,None,None,0   ,2   ,None],
+                                    [None,None,5   ,None,None,None,6   ],
+                                    [5   ,None,None,None,None,None,None],
+                                    [None,None,None,0   ,None,None,None],
+                                    [None,None,None,None,None,None,0   ],
+                                    [0   ,None,None,None,4   ,None,None],
+                                    [None,1   ,0   ,None,None,None,None]],
+                                    custom_boxes=[[(0, 0), (0, 1), (0,2), (1,0),(1,1),(2,0),(2,1)],
+                                                  [(0,3),(0,4),(0,5),(1,2),(1,3),(1,4),(2,4)],
+                                                  [(0,6),(1,5),(1,6),(2,5),(2,6),(3,5),(3,6)],
+                                                  [(2,2),(2,3),(3,2),(3,3),(3,4),(4,3),(4,4)],
+                                                  [(3,0),(3,1),(4,0),(4,1),(5,0),(5,1),(6,0)],
+                                                  [(4,2),(5,2),(5,3),(5,4),(6,1),(6,2),(6,3)],
+                                                  [(4,5),(4,6),(5,5),(5,6),(6,4),(6,5),(6,6)]])
 
 
 if __name__ == '__main__':
